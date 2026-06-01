@@ -1,0 +1,67 @@
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Entorno virtual ──────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Variables de entorno (secretos) ──────────────────────
+.env
+!.env.example
+
+# ── Dependencias / builds ────────────────────────────────
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Tests / coverage ─────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+
+# ── YOLO / Ultralytics runs ──────────────────────────────
+runs/
+*.pt.tmp
+
+# ── Sistema operativo ────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Claude Code ──────────────────────────────────────────
+.claude/
+
+# ── IDEs ─────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── Jupyter (si usas notebooks locales) ──────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── SQL Developer (instalador y carpeta) ─────────────────
+sqldeveloper*/
+sqldeveloper*.zip
+*.zip
+*.exe
+*.msi
+*.dmg
+
+# ── Archivos temporales ───────────────────────────────────
+*.tmp
+*.bak
