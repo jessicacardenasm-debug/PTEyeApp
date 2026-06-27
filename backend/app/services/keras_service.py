@@ -8,8 +8,10 @@ from app.models.analysis import AnalysisResult, Finding
 _MODEL_PATH = Path(__file__).parent.parent.parent / "modelo" / "densenet201.keras"
 _model: tf.keras.Model | None = None
 
-# TODO: actualizar con el orden real de class_indices del entrenamiento (son 6 clases)
-_CLASS_NAMES = ["normal", "glaucoma"]
+# Orden alfabético por defecto de flow_from_directory:
+# 0=AMD, 1=cataract, 2=diabetic_retinopathy, 3=glaucoma, 4=hypertension, 5=normal
+# TODO: verificar con train_generator.class_indices si el orden difiere
+_CLASS_NAMES = ["AMD", "cataract", "diabetic_retinopathy", "glaucoma", "hypertension", "normal"]
 _IMG_SIZE = (224, 224)
 
 
@@ -21,6 +23,59 @@ def get_model() -> tf.keras.Model:
 
 
 _CLINICAL_INFO = {
+    "AMD": {
+        "condition": "Degeneración Macular Asociada a la Edad (DMAE)",
+        "findings": [
+            Finding(name="Drusas en mácula", severity="Moderate"),
+            Finding(name="Alteraciones en epitelio pigmentario retiniano", severity="Moderate"),
+            Finding(name="Posible neovascularización coroidea", severity="Severe"),
+        ],
+        "symptoms": [
+            "Visión central borrosa o distorsionada",
+            "Manchas oscuras en el centro del campo visual",
+            "Dificultad para leer o reconocer rostros",
+            "Metamorfopsia (líneas rectas que se ven onduladas)",
+        ],
+        "recommendation": (
+            "Derivar a oftalmología para tomografía de coherencia óptica (OCT) y angiografía. "
+            "Evaluar tratamiento con antiangiogénicos intravítreos si se confirma forma húmeda."
+        ),
+    },
+    "cataract": {
+        "condition": "Catarata",
+        "findings": [
+            Finding(name="Opacidad del cristalino", severity="Moderate"),
+            Finding(name="Reducción de transparencia de medios oculares", severity="Moderate"),
+        ],
+        "symptoms": [
+            "Visión borrosa o nublada progresiva",
+            "Sensibilidad aumentada a la luz y deslumbramiento",
+            "Halos alrededor de luces",
+            "Cambios frecuentes en la graduación óptica",
+        ],
+        "recommendation": (
+            "Derivar a oftalmología para evaluación de agudeza visual y biomicroscopía. "
+            "Considerar cirugía de facoemulsificación con implante de lente intraocular."
+        ),
+    },
+    "diabetic_retinopathy": {
+        "condition": "Retinopatía Diabética",
+        "findings": [
+            Finding(name="Microaneurismas retinianos", severity="Moderate"),
+            Finding(name="Exudados duros y/o algodonosos", severity="Moderate"),
+            Finding(name="Hemorragias retinianas", severity="Severe"),
+        ],
+        "symptoms": [
+            "Visión fluctuante",
+            "Manchas oscuras o cuerpos flotantes",
+            "Visión borrosa",
+            "Pérdida de visión en estadios avanzados",
+        ],
+        "recommendation": (
+            "Derivar urgentemente a oftalmología para clasificación de severidad y OCT macular. "
+            "Optimizar control glucémico y tensión arterial. Evaluar fotocoagulación o antiangiogénicos."
+        ),
+    },
     "glaucoma": {
         "condition": "Glaucoma",
         "findings": [
@@ -39,11 +94,29 @@ _CLINICAL_INFO = {
             "y campo visual. Iniciar tratamiento hipotensor ocular si se confirma diagnóstico."
         ),
     },
+    "hypertension": {
+        "condition": "Retinopatía Hipertensiva",
+        "findings": [
+            Finding(name="Estrechamiento arteriolar generalizado", severity="Moderate"),
+            Finding(name="Cruces arteriovenosos patológicos", severity="Moderate"),
+            Finding(name="Exudados y/o hemorragias en llama", severity="Severe"),
+        ],
+        "symptoms": [
+            "Generalmente asintomática en estadios iniciales",
+            "Visión borrosa en casos severos",
+            "Cefalea asociada a hipertensión",
+        ],
+        "recommendation": (
+            "Control urgente de presión arterial. Derivar a cardiología y oftalmología. "
+            "Seguimiento estrecho del fondo de ojo según grado de retinopatía (clasificación Keith-Wagener)."
+        ),
+    },
     "normal": {
         "condition": "Sin patología detectada",
         "findings": [
             Finding(name="Nervio óptico con apariencia normal", severity="Mild"),
             Finding(name="Relación excavación/disco dentro de límites", severity="Mild"),
+            Finding(name="Retina sin lesiones evidentes", severity="Mild"),
         ],
         "symptoms": [
             "Sin síntomas visuales reportados",
@@ -68,7 +141,6 @@ async def analyze_eye_image(image_bytes: bytes, patient_id: str) -> AnalysisResu
     inputs = _preprocess(image_bytes)
     predictions = model.predict(inputs, verbose=0)
 
-    # predictions shape: (1, num_classes) con salida softmax
     probs = predictions[0]
     best_idx = int(np.argmax(probs))
     best_conf = float(probs[best_idx])
