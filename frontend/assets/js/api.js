@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = "/api";
 
 const api = {
   async login(email, password) {

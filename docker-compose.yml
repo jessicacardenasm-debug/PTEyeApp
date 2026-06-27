@@ -1,0 +1,41 @@
+services:
+  backend:
+    build: ./backend
+    image: oculargard-backend:latest
+    container_name: oculargard-backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    expose:
+      - "8000"
+    networks:
+      - internal
+
+  frontend:
+    build: ./frontend
+    image: oculargard-frontend:latest
+    container_name: oculargard-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - internal
+      - easypanel
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
+      - "traefik.http.routers.oculargard.rule=Host(`oculargard.rimay.ai`)"
+      - "traefik.http.routers.oculargard.entrypoints=https"
+      - "traefik.http.routers.oculargard.tls=true"
+      - "traefik.http.routers.oculargard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.oculargard.loadbalancer.server.port=80"
+      - "traefik.http.routers.oculargard-http.rule=Host(`oculargard.rimay.ai`)"
+      - "traefik.http.routers.oculargard-http.entrypoints=http"
+      - "traefik.http.routers.oculargard-http.middlewares=oculargard-redirect"
+      - "traefik.http.middlewares.oculargard-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.oculargard-redirect.redirectscheme.permanent=true"
+
+networks:
+  internal:
+    driver: bridge
+  easypanel:
+    external: true
