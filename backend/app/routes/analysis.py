@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends
-from app.services.yolo_service import analyze_eye_image
+from app.services.keras_service import analyze_eye_image
 from app.models.analysis import AnalysisResult
 from app.dependencies import get_current_user
 
