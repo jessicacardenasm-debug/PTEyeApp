@@ -3,135 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OcularGuard — Pre-Diagnóstico</title>
+  <title>OcularGuard — Resultado</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../assets/css/custom.css">
 </head>
 <body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
 
-  <div x-data="resultsApp()" class="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden fade-in">
+  <div x-data="resultApp()" class="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden">
 
     <!-- Header -->
-    <div class="header-gradient px-6 py-4 text-white">
-      <p class="text-xs font-semibold uppercase tracking-widest opacity-80">Pre-Diagnóstico IA</p>
-      <p class="text-sm opacity-70 mt-0.5">Confirmación Médica Requerida</p>
-    </div>
-
-    <div class="px-6 py-5 space-y-4">
-
-      <!-- Condition card -->
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-        <div class="bg-amber-100 rounded-full p-2 mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-        </div>
-        <div>
-          <p class="text-xs text-amber-600 font-semibold uppercase tracking-wide">Posible Condición Detectada</p>
-          <p class="text-xl font-bold text-slate-800 mt-0.5" x-text="result.condition">—</p>
-          <p class="text-xs text-slate-500 mt-1">
-            Confianza: <span class="font-semibold text-teal-600" x-text="confidenceLabel">—</span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Findings -->
+    <div class="header-gradient px-6 py-4 flex items-center justify-between text-white">
       <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Resumen de Hallazgos</p>
-        <ul class="space-y-1.5">
-          <template x-for="f in result.findings" :key="f.name">
-            <li class="flex items-center justify-between">
-              <span class="flex items-center gap-2 text-sm text-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span x-text="f.name"></span>
-              </span>
-              <span
-                class="text-xs font-medium px-2 py-0.5 rounded-full"
-                :class="{
-                  'badge-severe':   f.severity === 'Severe',
-                  'badge-moderate': f.severity === 'Moderate',
-                  'badge-mild':     f.severity === 'Mild'
-                }"
-                x-text="f.severity"
-              ></span>
-            </li>
-          </template>
-        </ul>
+        <p class="text-xs font-semibold uppercase tracking-widest opacity-80">Resultado</p>
+        <p class="text-sm font-bold mt-0.5" x-text="patientLabel">Paciente ID: —</p>
       </div>
-
-      <!-- Symptoms -->
-      <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Síntomas Correlacionados</p>
-        <ul class="grid grid-cols-2 gap-1">
-          <template x-for="s in result.symptoms" :key="s">
-            <li class="flex items-center gap-1.5 text-xs text-slate-600">
-              <span class="w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0"></span>
-              <span x-text="s"></span>
-            </li>
-          </template>
-        </ul>
-      </div>
-
-      <!-- Recommendation -->
-      <div class="bg-slate-50 rounded-xl px-4 py-3">
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Recomendación</p>
-        <p class="text-sm text-slate-700" x-text="result.recommendation">—</p>
-      </div>
-
-      <!-- CTA buttons -->
-      <button
-        @click="confirm"
-        :disabled="confirmed"
-        class="w-full header-gradient text-white font-semibold py-2.5 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-60 flex items-center justify-center gap-2"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      <button @click="api.logout()" class="text-white opacity-70 hover:opacity-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
-        <span x-text="confirmed ? 'GUARDADO EN EXPEDIENTE ✓' : 'CONFIRMAR Y AGREGAR AL EXPEDIENTE'"></span>
       </button>
-
-      <button
-        @click="window.location.href = 'study.html'"
-        class="w-full border border-slate-200 text-slate-600 text-sm font-medium py-2 rounded-lg hover:bg-slate-50 transition"
-      >
-        Nuevo Estudio
-      </button>
-
     </div>
 
-    <!-- Disclaimer -->
-    <p class="text-center text-xs text-slate-400 px-6 pb-5 leading-relaxed" x-text="result.disclaimer"></p>
+    <!-- Solo la enfermedad detectada -->
+    <div class="px-6 py-12 flex flex-col items-center text-center fade-in">
+      <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-3">Enfermedad detectada</p>
+      <p class="text-2xl font-bold text-slate-800" x-text="condition">—</p>
+    </div>
+
+    <!-- Volver -->
+    <div class="px-6 pb-6">
+      <a href="study.html"
+         class="block w-full text-center header-gradient text-white font-semibold py-2.5 rounded-lg text-sm hover:opacity-90 transition">
+        NUEVO ANÁLISIS
+      </a>
+    </div>
 
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <script src="../assets/js/api.js"></script>
   <script>
-    function resultsApp() {
+    function resultApp() {
       return {
-        result: {
-          condition: "—",
-          confidence: 0,
-          findings: [],
-          symptoms: [],
-          recommendation: "—",
-          disclaimer: "",
-        },
-        confirmed: false,
-        get confidenceLabel() {
-          return (this.result.confidence * 100).toFixed(0) + "%";
-        },
+        condition: "—",
+        patientLabel: "Paciente ID: —",
         init() {
           api.requireAuth();
-          const saved = api.getResult();
-          if (saved) this.result = saved;
-          else window.location.href = "study.html";
-        },
-        confirm() {
-          // TODO: POST to /cases endpoint to persist in medical record
-          this.confirmed = true;
+          const result = api.getResult();
+          if (!result) {
+            window.location.href = "study.html";
+            return;
+          }
+          this.condition = result.condition;
+          this.patientLabel = "Paciente ID: " + result.patient_id;
         },
       };
     }

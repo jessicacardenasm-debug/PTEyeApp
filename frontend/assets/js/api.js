@@ -1,4 +1,8 @@
-const API_BASE = "/api";
+// En local (frontend servido en :5500) se llama directo al backend en :8000.
+// En producción (detrás de Traefik) se usa la ruta /api proxeada.
+const API_BASE = location.port === "5500"
+  ? "http://localhost:8000"
+  : "/api";
 
 const api = {
   async login(email, password) {

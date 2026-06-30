@@ -1,12 +1,20 @@
 import io
+import os
+
+# Keras 3 corre sobre el PyTorch ya instalado (evita depender de TensorFlow).
+os.environ.setdefault("KERAS_BACKEND", "torch")
+# Desactiva torch.compile/dynamo: la inferencia corre en modo eager (más estable).
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+
 import numpy as np
 from pathlib import Path
 from PIL import Image
-import tensorflow as tf
+import keras
+from keras.applications.densenet import preprocess_input as densenet_preprocess
 from app.models.analysis import AnalysisResult, Finding
 
 _MODEL_PATH = Path(__file__).parent.parent.parent / "modelo" / "densenet201.keras"
-_model: tf.keras.Model | None = None
+_model: keras.Model | None = None
 
 # Orden alfabético por defecto de flow_from_directory:
 # 0=AMD, 1=cataract, 2=diabetic_retinopathy, 3=glaucoma, 4=hypertension, 5=normal
@@ -15,10 +23,10 @@ _CLASS_NAMES = ["AMD", "cataract", "diabetic_retinopathy", "glaucoma", "hyperten
 _IMG_SIZE = (224, 224)
 
 
-def get_model() -> tf.keras.Model:
+def get_model() -> keras.Model:
     global _model
     if _model is None:
-        _model = tf.keras.models.load_model(str(_MODEL_PATH))
+        _model = keras.models.load_model(str(_MODEL_PATH))
     return _model
 
 
@@ -132,14 +140,15 @@ _CLINICAL_INFO = {
 
 def _preprocess(image_bytes: bytes) -> np.ndarray:
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize(_IMG_SIZE)
-    arr = tf.keras.applications.densenet.preprocess_input(np.array(image, dtype=np.float32))
+    arr = densenet_preprocess(np.array(image, dtype=np.float32))
     return np.expand_dims(arr, axis=0)
 
 
 async def analyze_eye_image(image_bytes: bytes, patient_id: str) -> AnalysisResult:
     model = get_model()
     inputs = _preprocess(image_bytes)
-    predictions = model.predict(inputs, verbose=0)
+    # Llamada directa (eager) en vez de model.predict() para evitar torch.compile/dynamo.
+    predictions = keras.ops.convert_to_numpy(model(inputs, training=False))
 
     probs = predictions[0]
     best_idx = int(np.argmax(probs))
